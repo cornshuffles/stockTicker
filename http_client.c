@@ -75,8 +75,8 @@
 
 // Macros for GUI
 #define TFT_LEFT_ALIGNED				(0)
-#define TFT_PRICE						(100)
-#define TFT_PERCENT						(225)
+#define TFT_PRICE						(88)
+#define TFT_PERCENT						(210)
 #define TFT_ROW_ONE						(0)
 #define TFT_ROW_TWO						(30)
 #define TFT_ROW_THREE					(50)
@@ -92,7 +92,8 @@ void disconnect_callback(void *arg);
 /*******************************************************************************
 * Global Variables
 ********************************************************************************/
-volatile bool connected;
+volatile bool connected = false;
+uint32_t apiKeySelect = 0;
 
 /*******************************************************************************
  * Function Name: http_client_task
@@ -195,110 +196,147 @@ void http_client_task(void *arg){
 			}
 		}
 
-		// Create Request
-		uint8_t buffer[BUFFERSIZE];
-		cy_http_client_request_header_t request;
-		request.buffer = buffer;
-		request.buffer_len = BUFFERSIZE;
-		request.method = CY_HTTP_CLIENT_METHOD_GET;
-		request.range_start = -1;
-		request.range_end = -1;
-		request.resource_path = AMDSTOCKQUOTERESOURCE;
-
-		// Create Header
-		cy_http_client_header_t header;
-		header.field = "Host";
-		header.field_len = strlen("Host");
-		header.value = SERVERHOSTNAME;
-		header.value_len = strlen(SERVERHOSTNAME);
-		uint32_t num_header = 1;
-
-		result = cy_http_client_write_header(clientHandle, &request, &header, num_header);
-		if(result != CY_RSLT_SUCCESS){
-			printf("HTTP Client Header Write Failed!\n");
-			CY_ASSERT(0);
-		}
-
-		// Var to hold the servers responses
-		cy_http_client_response_t response;
-
-		// Send get request
+		// Create and send get request, parse and display data
 		if(connected){
+			printf("Creating request. Connection state: %d\n", connected);
+
+			// Create Request
+			uint8_t buffer[BUFFERSIZE];
+			cy_http_client_request_header_t request;
+			request.buffer = buffer;
+			request.buffer_len = BUFFERSIZE;
+			request.method = CY_HTTP_CLIENT_METHOD_GET;
+			request.range_start = -1;
+			request.range_end = -1;
+			switch(apiKeySelect){
+			case 0:
+				request.resource_path = AMDSTOCKQUOTERESOURCE_0;
+				printf("Key 0\n");
+				break;
+			case 1:
+				request.resource_path = AMDSTOCKQUOTERESOURCE_1;
+				printf("Key 1\n");
+				break;
+			case 2:
+				request.resource_path = AMDSTOCKQUOTERESOURCE_2;
+				printf("Key 2\n");
+				break;
+			default:
+				apiKeySelect = 0;
+				request.resource_path = AMDSTOCKQUOTERESOURCE_0;
+				printf("DEFAULT\n");
+				break;
+			}
+
+			// Create Header
+			cy_http_client_header_t header;
+			header.field = "Host";
+			header.field_len = strlen("Host");
+			header.value = SERVERHOSTNAME;
+			header.value_len = strlen(SERVERHOSTNAME);
+			uint32_t num_header = 1;
+
+			result = cy_http_client_write_header(clientHandle, &request, &header, num_header);
+			if(result != CY_RSLT_SUCCESS){
+				printf("HTTP Client Header Write Failed!\n");
+				CY_ASSERT(0);
+			}
+
+			// Var to hold the servers responses
+			cy_http_client_response_t response;
+
 			printf("Sending HTTP Request\n");
 			result = cy_http_client_send(clientHandle, &request, NULL, 0, &response);
 			if(result != CY_RSLT_SUCCESS){
 				printf("HTTP Client Send Failed!\n");
 			}
-		}
 
-		// Print response message
-		printf("Response received from httpbin.org/html:\n");
-		for(int i = 2; i < response.body_len - 2; i++){
-			printf("%c", response.body[i]);
-		}
-		printf("\n\n");
+			// Print response message
+			printf("Response received:\n");
+			for(int i = 1; i < response.body_len - 2; i++){
+				printf("%c", response.body[i]);
+			}
+			printf("\n\n");
 
-		// Parse the JSON received
-		cJSON *root = cJSON_ParseWithLength((const char*)response.body + 1, response.body_len - 2); // Read the JSON
-		cJSON *symbol = cJSON_GetObjectItem(root,"symbol"); // Ticker
-		cJSON *price = cJSON_GetObjectItem(root,"price"); // Current Price
-		cJSON *change = cJSON_GetObjectItem(root,"changesPercentage"); // % change over the day
-		cJSON *dayLow = cJSON_GetObjectItem(root,"dayLow"); // Todays low
-		cJSON *dayHigh = cJSON_GetObjectItem(root,"dayHigh"); // Todays high
-		cJSON *open = cJSON_GetObjectItem(root,"open"); // Todays open price
-		cJSON *previousClose = cJSON_GetObjectItem(root,"previousClose"); // Previous closing price
-		cJSON *timestamp = cJSON_GetObjectItem(root,"timestamp"); // Unix time stamp
+			// Parse the JSON received
+			cJSON *root = cJSON_ParseWithLength((const char*)response.body + 1, response.body_len - 2); // Read the JSON
+			cJSON *symbol = cJSON_GetObjectItem(root,"symbol"); // Ticker
+			cJSON *price = cJSON_GetObjectItem(root,"price"); // Current Price
+			cJSON *change = cJSON_GetObjectItem(root,"changesPercentage"); // % change over the day
+			cJSON *dayLow = cJSON_GetObjectItem(root,"dayLow"); // Todays low
+			cJSON *dayHigh = cJSON_GetObjectItem(root,"dayHigh"); // Todays high
+			cJSON *open = cJSON_GetObjectItem(root,"open"); // Todays open price
+			cJSON *previousClose = cJSON_GetObjectItem(root,"previousClose"); // Previous closing price
+			cJSON *timestamp = cJSON_GetObjectItem(root,"timestamp"); // Unix time stamp
 
-		// Disconnect from server
-		result = cy_http_client_disconnect(clientHandle);
-		if(result != CY_RSLT_SUCCESS){
-			printf("HTTP Client Disconnect Failed!\n");
-		}
-		else{
-			printf("Disconnected from HTTP Server\n");
-			connected = false;
-		}
+			// Disconnect from server
+			result = cy_http_client_disconnect(clientHandle);
+			if(result != CY_RSLT_SUCCESS){
+				printf("HTTP Client Disconnect Failed!\n");
+			}
+			else{
+				printf("Disconnected from HTTP Server\n");
+				connected = false;
+			}
 
-		// Display the stock info
-		char symbol_s[25];
-		GUI_SetFont(&GUI_Font32B_ASCII); // Font Size
-		sprintf(symbol_s, "%s", symbol->valuestring);
-		GUI_DispStringAt(symbol_s, TFT_LEFT_ALIGNED, TFT_ROW_ONE);
+			// Check if website actually gave us data
+			if((int)cJSON_IsString(symbol) == 0){
+				apiKeySelect = (apiKeySelect + 1) % NUM_API_KEYS;
+				printf("Request failed. New key select: %ld\n", apiKeySelect);
+				continue; // Jump to next iteration of loop
+			}
 
-		char price_s[25];
-		sprintf(price_s, "$%.2f", price->valuedouble);
-		GUI_DispStringAt(price_s, TFT_PRICE, TFT_ROW_ONE);
+			printf("Drawing Info.\n");
+			// Display the stock info
+			GUI_Clear(); // Clear the display
+			char symbol_s[25];
+			GUI_SetFont(&GUI_Font32B_ASCII); // Font Size
+			sprintf(symbol_s, "%s", symbol->valuestring);
+			GUI_DispStringAt(symbol_s, TFT_LEFT_ALIGNED, TFT_ROW_ONE);
 
-		char change_s[25];
-		if(change->valuedouble >= 0){
-			GUI_SetColor(GUI_GREEN); // Text Color
-			sprintf(change_s, "+%.2f%%\n", change->valuedouble);
+			char price_s[25];
+			sprintf(price_s, "$%.2f", price->valuedouble);
+			GUI_DispStringAt(price_s, TFT_PRICE, TFT_ROW_ONE);
+
+			char change_s[25];
+			if(change->valuedouble >= 0){
+				GUI_SetColor(GUI_GREEN); // Text Color
+				sprintf(change_s, "+%.2f%%\n", change->valuedouble);
+			}else{
+				GUI_SetColor(GUI_RED); // Text Color
+				sprintf(change_s, "%.2f%%\n", change->valuedouble);
+			}
 			GUI_DispStringAt(change_s, TFT_PERCENT, TFT_ROW_ONE);
 			GUI_SetColor(GUI_WHITE); // Text Color
-		}else{
-			GUI_SetColor(GUI_RED); // Text Color
-			sprintf(change_s, "%.2f%%\n", change->valuedouble);
-			GUI_DispStringAt(change_s, TFT_PERCENT, TFT_ROW_ONE);
-			GUI_SetColor(GUI_WHITE); // Text Color
-		}
 
-		char open_close[25];
-		GUI_SetFont(&GUI_Font24B_ASCII); // Font Size
-		sprintf(open_close, "$%.2f / $%.2f", previousClose->valuedouble, open->valuedouble);
-		GUI_DispStringAt("PC/O", TFT_LEFT_ALIGNED, TFT_ROW_TWO);
-		GUI_DispStringAt(open_close, TFT_PRICE, TFT_ROW_TWO);
+			char open_close[25];
+			GUI_SetFont(&GUI_Font24B_ASCII); // Font Size
+			sprintf(open_close, "$%.2f / $%.2f", previousClose->valuedouble, open->valuedouble);
+			GUI_DispStringAt("PC/O", TFT_LEFT_ALIGNED, TFT_ROW_TWO);
+			GUI_DispStringAt(open_close, TFT_PRICE, TFT_ROW_TWO);
 
-		char day_low_high[25];
-		sprintf(day_low_high, "$%.2f / $%.2f", dayLow->valuedouble, dayHigh->valuedouble);
-		GUI_DispStringAt("DL/DH", TFT_LEFT_ALIGNED, TFT_ROW_THREE);
-		GUI_DispStringAt(day_low_high, TFT_PRICE, TFT_ROW_THREE);
+			char day_low_high[25];
+			sprintf(day_low_high, "$%.2f / $%.2f", dayLow->valuedouble, dayHigh->valuedouble);
+			GUI_DispStringAt("DL/DH", TFT_LEFT_ALIGNED, TFT_ROW_THREE);
+			GUI_DispStringAt(day_low_high, TFT_PRICE, TFT_ROW_THREE);
 
-		time_t updateTime = (time_t)timestamp->valueint;
-		GUI_SetFont(&GUI_Font20B_ASCII); // Font Size
-		GUI_DispStringAt(ctime(&updateTime), TFT_LEFT_ALIGNED, TFT_ROW_FIVE);
+			time_t updateTime = (time_t)timestamp->valueint;
+			GUI_SetFont(&GUI_Font20B_ASCII); // Font Size
+			GUI_DispStringAt(ctime(&updateTime), TFT_LEFT_ALIGNED, TFT_ROW_FIVE);
 
-		// Wait 6 mins before re-connecting and querying again
-		vTaskDelay(pdMS_TO_TICKS(360000));
+
+			printf("Deleting stuff.\n");
+			// Delete CJSON objects
+			cJSON_Delete(root);
+
+			printf("Deleted stuff.\n");
+		} // if(connected)
+
+		printf("Waiting 2 mins.\n");
+		// Wait 2 mins before re-connecting and querying again
+		vTaskDelay(pdMS_TO_TICKS(120000));
+
+		printf("Waited 2 mins.\n");
     }
 
 }
