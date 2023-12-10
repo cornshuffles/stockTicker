@@ -54,7 +54,10 @@
 #define SERVERHOSTNAME "financialmodelingprep.com"
 #define SERVERPORT     (443)
 
-#define AMDSTOCKQUOTERESOURCE "/api/v3/quote/AMD?apikey=<APIKEY>"
+#define NUM_API_KEYS            (3)
+#define AMDSTOCKQUOTERESOURCE_0 "/api/v3/quote/AMD?apikey=<mykey>"
+#define AMDSTOCKQUOTERESOURCE_1 "/api/v3/quote/AMD?apikey=<mykey>"
+#define AMDSTOCKQUOTERESOURCE_2 "/api/v3/quote/AMD?apikey=<mykey>"
 
 /* Security type of the Wi-Fi access point. See 'cy_wcm_security_t' structure
  * in "cy_wcm.h" for more details.
@@ -69,13 +72,58 @@
 
 #define MAKE_IPV4_ADDRESS(a, b, c, d) ((((uint32_t)d) << 24) | (((uint32_t)c) << 16) | (((uint32_t)b) << 8) | ((uint32_t)a))
 
-#define SSL_CLIENTCERT_PEM          \
-	"-----BEGIN CERTIFICATE-----\n" \
+#define SSL_CLIENTCERT_PEM                                               \
+	"-----BEGIN CERTIFICATE-----\n"                                      \
+	"MIIDazCCAlOgAwIBAgIUfRaVdsPcfXLdJlWWxFUncPKljo8wDQYJKoZIhvcNAQEL\n" \
+	"BQAwRTELMAkGA1UEBhMCVVMxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM\n" \
+	"GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yMzExMDIyMzU0MDlaFw0zMzEw\n" \
+	"MzAyMzU0MDlaMEUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApTb21lLVN0YXRlMSEw\n" \
+	"HwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEB\n" \
+	"AQUAA4IBDwAwggEKAoIBAQCqys3P1xv9911VsExY7Ba4PRt8LV4bp4ew/rOecfsw\n" \
+	"Xh0Azjh5yuK5ijKBFjcOeyxMSkdkU33dLdXLaqXGYC3Y5Eff+q/6ueaHZjN4MSTJ\n" \
+	"xaQujZILdkWbD5SXsC3awD0heN2otlzs1MQdtzDaP0M67AsxT2YvdIt95JLE8Gtr\n" \
+	"0XuTBA3I6nXboMT76fV8N7Wd5IjZNU37QgOYCvWdQVQsvdeNH0rTIJgI9U1h/dEK\n" \
+	"H0MM8zJfT038naE3K4pL+FaexjgvoehT6s4fEAYT/3IQ7xDzb8vyyunN2qHYfke1\n" \
+	"k/gimuILMIqBEmTciSIyHedrm97ZDVq8SdR4/dN6FCOzAgMBAAGjUzBRMB0GA1Ud\n" \
+	"DgQWBBQutqeyLtOYs9ktr3o+LjkxY5uPgTAfBgNVHSMEGDAWgBQutqeyLtOYs9kt\n" \
+	"r3o+LjkxY5uPgTAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCp\n" \
+	"YflCpUMQz46FrYlmW77lbi+DjasKAtQMjaO9kNPv8vQcQ3SFHKDZRP5SAgf6HdFB\n" \
+	"RQW/f/Oj0RC7wQuF1AsyYcw8CmO0FAG7LqgeGldZWdzbZEzVLYyAyMkGKpzHnvGj\n" \
+	"kH/BQbwE1DukwaGYknQrcvkNbpIj6DgVDkEkey5366TqZI+2xoE6/g7Yo0G8/kbM\n" \
+	"u5UX2weyaSMtdAm5wajpspLuvMK5QA95yjVRPsoaytByXrKRHc5yLXGHL6uFEhpE\n" \
+	"SJfcyx2iDrrwB8YH7rjUO48ZATx68wjZBitSycwSIUYFpzDwbPxrFoKQ4n699yEt\n" \
+	"IsZXRZVoSJ2oHMmRVSUv\n"                                             \
 	"-----END CERTIFICATE-----\n"
 
 /* SSL client private key. */
-#define SSL_CLIENTKEY_PEM           \
-	"-----BEGIN PRIVATE KEY-----\n" \
+#define SSL_CLIENTKEY_PEM                                                \
+	"-----BEGIN PRIVATE KEY-----\n"                                      \
+	"MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCqys3P1xv9911V\n" \
+	"sExY7Ba4PRt8LV4bp4ew/rOecfswXh0Azjh5yuK5ijKBFjcOeyxMSkdkU33dLdXL\n" \
+	"aqXGYC3Y5Eff+q/6ueaHZjN4MSTJxaQujZILdkWbD5SXsC3awD0heN2otlzs1MQd\n" \
+	"tzDaP0M67AsxT2YvdIt95JLE8Gtr0XuTBA3I6nXboMT76fV8N7Wd5IjZNU37QgOY\n" \
+	"CvWdQVQsvdeNH0rTIJgI9U1h/dEKH0MM8zJfT038naE3K4pL+FaexjgvoehT6s4f\n" \
+	"EAYT/3IQ7xDzb8vyyunN2qHYfke1k/gimuILMIqBEmTciSIyHedrm97ZDVq8SdR4\n" \
+	"/dN6FCOzAgMBAAECggEAHDUymMkmTmO0fpqHgYg8mGE/UNsNV/PrbUgj0l9w5SQm\n" \
+	"FiP5H+RqXcp9XOSWY0XkoxUBhYhkmUsgrGAI0SLBb7kERfHZbseVU3eFuKwlL039\n" \
+	"N9MZ89qs1FdWa1clu6NUdVrJATxdTKA3Y9EFuIYKTIj/sD0021GcWEaQFwa+Nyg0\n" \
+	"0nzCSyLc0ROOK4N99oe7TO1sl+dedhOWbkYhC6PIfYvI2W4bB7LG3S8w0ZMxRINj\n" \
+	"8dHpkH2sd7k3wV/siK5C9TtM+1F3CvGFuwGL2ny4t+JVogwDpvENjRSb7vyJuF8B\n" \
+	"lpIz8FASZZ7lnchlDf0RumcUm4tlPKWAtXrmPNbNAQKBgQDe6GfyPtP06LWNfGzv\n" \
+	"imBOIPVDtrH8Vl0mte+wT/ThtAxVMZ3prEnidMHWHKYz9+lhWCBjPxNk7mK5VAjt\n" \
+	"kPuwSCZKiLCyU/UkbAnFRymJf0zPPO/PCQRATgAABH/RwhjVNcjRvthnZ7qu1uyP\n" \
+	"G9DdFCzJ5O2GHzGyV8qD5oZYUQKBgQDEJb9gaf1XCl84RuAiRzqyHY5b5zJgRg0/\n" \
+	"Olv/EEJSRkM8+8pPCiF7HTwHDT3QWdFCRNzB0w4BJY684B2NlFJ29BaCl6csn9P3\n" \
+	"vFASWTcWDzJNt/mDv9l6DVTWV9yTWgPjaHlD5JAUNL9SMrDAuYnIgl2CQSHksggc\n" \
+	"81OT4xd+wwKBgQCW5KRY7Ab3ZwBfgrcLgJSozs64w9fAhYYRSl+y7q1KjGM82JWZ\n" \
+	"NTPexELi+gnYbB3j85AZHv21+VmDM0vH5bk7H9wr4FQco5Dy0t/aV83acf5A23NK\n" \
+	"p0Plc+e0G1ebWtUMn5gNxC8h8KoC6SLBzYaZ4apgEURo4nz1yVAh8c9HwQKBgQCz\n" \
+	"YY4ev2+nzV19mxvZXWjpgawykkJ41zfALj/6CMWOdqGBQQgotqwd6oN+M3bneBxG\n" \
+	"DbISNFEnbVCXnSKJ2y57iQiZD9YcMmLoujhEP4DoVKd9ehXfjnF2dIC0sY+Q1o6d\n" \
+	"x2q3U20MfZzGsIMDDetbCxY3TBeSDdrrlwBFTDatfwKBgEH0SAf+WhdBBpuQzcQU\n" \
+	"PXdfJAv7nvYK1EuYx7SMoc5X2qurYy5zb0HbZCz/LAnbJ5BIs/ta6cJmVrhDPDEM\n" \
+	"xzIeqNiLOSwHVbf4x78hisbMWy49idvmDFpC8VSvRs4pFt/84bflYcInXlid0BAB\n" \
+	"mNQ/k3fRffW4DdHiYzgoIfmF\n"                                         \
 	"-----END PRIVATE KEY-----\n"
 
 #define SSL_ROOTCA_PEM                                                   \
