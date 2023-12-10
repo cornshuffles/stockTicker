@@ -56,8 +56,8 @@
 * Macros
 ********************************************************************************/
 /* RTOS related macros. */
-#define HTTP_CLIENT_TASK_STACK_SIZE        (5 * 1024)
-#define HTTP_CLIENT_TASK_PRIORITY          (1)
+#define HTTP_CLIENT_TASK_STACK_SIZE (5 * 1024)
+#define HTTP_CLIENT_TASK_PRIORITY   (1)
 
 /*******************************************************************************
 * Global Variables
@@ -82,24 +82,23 @@ TaskHandle_t client_task_handle;
 *  int
 *
 *******************************************************************************/
-int main(void)
-{
-    cy_rslt_t result;
+int main(void) {
+	cy_rslt_t result;
 
-    /* This enables RTOS aware debugging in OpenOCD. */
+	/* This enables RTOS aware debugging in OpenOCD. */
 	uxTopUsedPriority = configMAX_PRIORITIES - 1;
 
-    /* Initialize the device and board peripherals */
-    result = cybsp_init() ;
-    CY_ASSERT(result == CY_RSLT_SUCCESS);
+	/* Initialize the device and board peripherals */
+	result = cybsp_init();
+	CY_ASSERT(result == CY_RSLT_SUCCESS);
 
-    /* To avoid compiler warnings. */
-	(void) result;
+	/* To avoid compiler warnings. */
+	(void)result;
 
 	/* Enable global interrupts. */
-    __enable_irq();
+	__enable_irq();
 
-    /* Initialize retarget-io to use the debug UART port. */
+	/* Initialize retarget-io to use the debug UART port. */
 	cy_retarget_io_init(CYBSP_DEBUG_UART_TX, CYBSP_DEBUG_UART_RX, CY_RETARGET_IO_BAUDRATE);
 
 	/* \x1b[2J\x1b[;H - ANSI ESC sequence to clear screen. */
